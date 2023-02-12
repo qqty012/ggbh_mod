@@ -1,0 +1,152 @@
+Using pre-set license
+Built from '2020.3/china_unity/release' branch; Version is '2020.3.9f1c1 (ef65345766d1) revision 15689012'; Using compiler version '192528614'; Build Type 'Release'
+OS: 'Windows 10 Pro; OS build 19045.2364; Version 2009; 64bit' Language: 'zh' Physical Memory: 16281 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1, IsPro: 0
+
+ COMMAND LINE ARGUMENTS:
+D:\Program Files\Unity\Editor\Unity.exe
+-adb2
+-batchMode
+-noUpm
+-name
+AssetImportWorker0
+-projectPath
+H:/mod/moda/ModProject_SreUyw/ModProject/ModRes/ResBuildABProject
+-logFile
+Logs/AssetImportWorker0.log
+-srvPort
+55399
+Successfully changed project path to: H:/mod/moda/ModProject_SreUyw/ModProject/ModRes/ResBuildABProject
+H:/mod/moda/ModProject_SreUyw/ModProject/ModRes/ResBuildABProject
+Using Asset Import Pipeline V2.
+Refreshing native plugins compatible for Editor in 29.59 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 2020.3.9f1c1 (ef65345766d1)
+[Subsystems] Discovering subsystems at path D:/Program Files/Unity/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path H:/mod/moda/ModProject_SreUyw/ModProject/ModRes/ResBuildABProject/Assets
+GfxDevice: creating device client; threaded=0
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: NVIDIA GeForce GTX 750 Ti (ID=0x1380)
+    Vendor:   
+    VRAM:     2006 MB
+    Driver:   31.0.15.2756
+Initialize mono
+Mono path[0] = 'D:/Program Files/Unity/Editor/Data/Managed'
+Mono path[1] = 'D:/Program Files/Unity/Editor/Data/MonoBleedingEdge/lib/mono/unityjit'
+Mono config path = 'D:/Program Files/Unity/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56816
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: D:/Program Files/Unity/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.001154 seconds.
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 33.69 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  1.121 seconds
+Platform modules already initialized, skipping
+Registering precompiled user dll's ...
+Registered in 0.003430 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.31 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  0.785 seconds
+Platform modules already initialized, skipping
+========================================================================
+Worker process is ready to serve import requests
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.04 seconds
+Refreshing native plugins compatible for Editor in 0.50 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 1766 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 83.6 MB.
+System memory in use after: 83.7 MB.
+
+Unloading 19 unused Assets to reduce memory usage. Loaded Objects now: 2215.
+Total: 1.784000 ms (FindLiveObjects: 0.181200 ms CreateObjectMapping: 0.063900 ms MarkObjects: 1.477600 ms  DeleteObjects: 0.059500 ms)
+
+========================================================================
+Received Import Request.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '84a4d8c04aaebae8617b9d27ab32caf8') in 0.095619 seconds
+  Import took 0.099619 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 187.499360 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '4cb32746f2302f70b154c2ecf98e4370') in 0.023602 seconds
+  Import took 0.027696 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 9.443686 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b6f7e0141bdbce3f280a7e5df5c18e6f') in 0.024663 seconds
+  Import took 0.028681 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 8.244080 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b3150e4b178384bf51f312a1bdae8301') in 0.022337 seconds
+  Import took 0.026611 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 7.835138 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'f0df71e4de0f5a56b987847cea6c3177') in 0.024233 seconds
+  Import took 0.028497 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 10.057004 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'ecaa39cfdd83927f06584e67ea6155c6') in 0.024949 seconds
+  Import took 0.029424 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 11.659685 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'dfee8e79a4a702fbe513182dee91d71d') in 0.024828 seconds
+  Import took 0.028933 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 3.805470 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'fb1f8b44f6364b9c7ff0ebba31346f7d') in 0.022735 seconds
+  Import took 0.026968 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 20.940170 seconds.
+  path: Assets/Resources/UI/UIQqtyModifier.prefab
+  artifactKey: Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Resources/UI/UIQqtyModifier.prefab using Guid(a0f506d9cbca5bf478b42f3d2b01848f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '6ac8c5ee5aaa302ee520d22823bbc070') in 0.024432 seconds
+  Import took 0.029056 seconds .
+
+========================================================================
+Received Prepare
+Refreshing native plugins compatible for Editor in 1.42 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 49.6 MB.
+System memory in use after: 49.7 MB.
+
+Unloading 11 unused Assets to reduce memory usage. Loaded Objects now: 2217.
+Total: 1.971800 ms (FindLiveObjects: 0.156300 ms CreateObjectMapping: 0.054800 ms MarkObjects: 1.726400 ms  DeleteObjects: 0.033500 ms)
+
+AssetImportWorkerClient::OnTransportError - code=2 error=End of file
