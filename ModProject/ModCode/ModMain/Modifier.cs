@@ -97,15 +97,16 @@ namespace qqty_Modifier
                 var xing = GameObject.Find("mod_qqty_name_1").GetComponent<InputField>();
                 xing.text = prop.name[0];
                 Action<string> xingListener = (string val) => {
-                    prop.name[0] = val;
+                    prop.name = new string[] { val, prop.name[1] };
                 };
-                xing.onValueChanged.AddListener(xingListener);
+                xing.onEndEdit.AddListener(xingListener);
+
                 var ming = GameObject.Find("mod_qqty_name_2").GetComponent<InputField>();
                 ming.text = prop.name[1];
                 Action<string> mingListener = (string val) => {
-                    prop.name[1] = val;
+                    prop.name = new string[] { prop.name[0], val };
                 };
-                ming.onValueChanged.AddListener(mingListener);
+                ming.onEndEdit.AddListener(mingListener);
             }
             #endregion
 
