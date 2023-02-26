@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,54 +12,114 @@ namespace qqty_Modifier
 
         bool IsOpen = false;
 
+        static string defaultItemSreachText = "";
+        static string defaultItemCount = "1";
+        static int propID = 0;
+
         public void OnCreate()
         {
             mod = new UIType.UITypeBase("UIQqtyModifier", UILayer.UI);
         }
 
+        /// <summary>
+        /// 设置最大值的上限
+        /// </summary>
+        private void SetDynMax()
+        {
+            int maxValue = 200000000;
+            int minValue = 10;
+            if (g.world != null && g.world.playerUnit != null)
+            {
+                var max = g.world.playerUnit.data.dynUnitData;
+                max.hpMax = max.hpMax.Clamp(minValue, maxValue);
+                max.mpMax = max.mpMax.Clamp(minValue, maxValue);
+                max.spMax = max.spMax.Clamp(minValue, maxValue);
+                max.defense = max.defense.Clamp(minValue, maxValue);
+                max.attack = max.attack.Clamp(minValue, maxValue);
+            }
+        }
+
         public void OnUpdate()
         {
-            
+
+            SetDynMax();
+            if (Input.GetKeyDown(KeyCode.Keypad1))
+            {
+                var info = g.ui.OpenUI<UIModDress>(UIType.ModDress);
+                var modelData = g.world.playerUnit.data.unitData.propertyData.modelData;
+
+                var sb = $"1|{modelData.hat}|{modelData.hair}|{modelData.hairFront}|{modelData.head}|{modelData.eyebrows}|{modelData.eyes}" +
+                    $"|{modelData.nose}|{modelData.mouth}|{modelData.body}|{modelData.back}|{modelData.forehead}|{modelData.faceFull}|{modelData.faceLeft}|{modelData.faceRight}";
+
+                ModDataValueString modDataValue = new ModDataValueString();
+                modDataValue.value = sb;
+                info.InitData(modDataValue, UnitSexType.Man);
+
+                info.btnOK.onClick.RemoveAllListeners();
+
+                Action btnOkLisener = () => {
+                    var str = info.piptValue.text;
+
+                };
+                info.btnOK.onClick.AddListener(btnOkLisener);
+            }
+
             if (Input.GetKeyDown(KeyCode.BackQuote)) {
-                if (IsOpen)
-                {
+                if (IsOpen) {
                     g.ui.CloseUI(mod);
                     IsOpen = false;
                     g.ui.CloseUI(UIType.MaskNotClick);
-                } else
-                {
+                } else  {
                     IsOpen = true;
                     g.ui.OpenUI(mod);
                     g.ui.OpenUI(UIType.MaskNotClick);
+                   
                     if (g.world.playerUnit != null) {
-                        Config();
-                        BuildSchool();
+                        try { Config(); } catch (Exception e) { Console.WriteLine(e); }
+                        try { BuildSchool(); } catch (Exception e) { Console.WriteLine(e); }
+                        try { BuildLuck(); } catch (Exception e) { Console.WriteLine(e); }
+                        try { BuildItem(); } catch (Exception e) { Console.WriteLine(e); }
                     }
                 }
+                Input.ResetInputAxes();
             } 
 
-            if(IsOpen)
-            {
-                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse1))
-                {
+            if(IsOpen) {
+                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse1)) {
                     g.ui.CloseUI(mod);
                     IsOpen = false;
                     g.ui.CloseUI(UIType.MaskNotClick);
+                    Input.ResetInputAxes();
                 }
             }
         }
 
       
-        private ConfLocalTextItem getLocalItem(string type,int id)
+        private string getLocalText(string type,int id)
         {
-            return g.conf.localText.allText[type + id];
+            return getLocalText(type + id);
+        }
+        private string getLocalText(string key)
+        {  
+            return GameTool.LS(key);
         }
 
-        private DataUnit.UnitInfoData GetUnit(string unitID)
-        {
-            return g.game.data.unit.GetUnit(unitID);
-        }
+        /// <summary>
+        /// 内容的变化
+        /// </summary>
+        /// <param name="x">变化的内容</param>
+        delegate void OnChange(int x);
+        /// <summary>
+        /// 输入框
+        /// </summary>
+        /// <param name="inputName">name</param>
+        /// <param name="x">显示的值</param>
+        /// <param name="onChange">输入框内容的监听</param>
+        delegate void SetInputField(string inputName, long x, OnChange onChange);
 
+        /// <summary>
+        /// 属性
+        /// </summary>
         private void Config()
         {
             var npcinfo = g.ui.GetUI<UINPCInfo>(UIType.NPCInfo);
@@ -66,6 +127,15 @@ namespace qqty_Modifier
             var player = npcinfo != null ? npcinfo.unit : g.world.playerUnit;
 
             var prop = player.data.unitData.propertyData;
+
+            SetInputField setInputField = delegate (string inputName, long x, OnChange onChange) {
+                var component = GameObject.Find(inputName).GetComponent<InputField>();
+                component.text = "" + x;
+                Action<string> componentListener = (string val) => {
+                    onChange(int.Parse(val));
+                };
+                component.onEndEdit.AddListener(componentListener);
+            };
 
             #region 灵石
             var money = GameObject.Find("mod_qqty_p_money").GetComponent<InputField>();
@@ -90,13 +160,13 @@ namespace qqty_Modifier
             };
             money.onValueChanged.AddListener(moneyListener);
             #endregion
-
             #region 姓名
             if (prop.name != null && prop.name.Length > 0)
             {
                 var xing = GameObject.Find("mod_qqty_name_1").GetComponent<InputField>();
                 xing.text = prop.name[0];
                 Action<string> xingListener = (string val) => {
+                    if (val == null || val.Trim().Equals("")) return;
                     prop.name = new string[] { val, prop.name[1] };
                 };
                 xing.onEndEdit.AddListener(xingListener);
@@ -104,19 +174,19 @@ namespace qqty_Modifier
                 var ming = GameObject.Find("mod_qqty_name_2").GetComponent<InputField>();
                 ming.text = prop.name[1];
                 Action<string> mingListener = (string val) => {
+                    if (val == null || val.Trim().Equals("")) return;
                     prop.name = new string[] { prop.name[0], val };
                 };
                 ming.onEndEdit.AddListener(mingListener);
             }
             #endregion
-
             #region 性格
             var characterOptions = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
             var chayy = new System.Collections.Generic.List<int>();
             var tmps = g.conf.roleCreateCharacter._allConfList;
             foreach (var tm in tmps)
             {
-                characterOptions.Add(new Dropdown.OptionData(getLocalItem("role_character_name", tm.id).ch));
+                characterOptions.Add(new Dropdown.OptionData(getLocalText("role_character_name", tm.id)));
                 chayy.Add(tm.id);
             }
             var character1 = GameObject.Find("mod_qqty_character_1").GetComponent<Dropdown>();
@@ -141,7 +211,6 @@ namespace qqty_Modifier
             };
             character3.onValueChanged.AddListener(character3Listener);
             #endregion
-
             #region 爱好
             var hobbyOptions = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
             var hobbyItems = g.conf.itemHobby._allConfList;
@@ -149,7 +218,7 @@ namespace qqty_Modifier
             foreach (var item in hobbyItems)
                 if (!array.Contains(item.hobbyID)) array.Add(item.hobbyID);
             foreach (var i in array)
-                hobbyOptions.Add(new Dropdown.OptionData(getLocalItem("role_hobby_name", i).ch));
+                hobbyOptions.Add(new Dropdown.OptionData(getLocalText("role_hobby_name", i)));
             var hobbyas = prop.hobby;
             var hobby1 = GameObject.Find("mod_qqty_hobby_1").GetComponent<Dropdown>();
             hobby1.options = hobbyOptions;
@@ -176,363 +245,160 @@ namespace qqty_Modifier
             };
             hobby3.onValueChanged.AddListener(hobby3Listener);
             #endregion
-
             #region 年龄
-            var age = GameObject.Find("mod_qqty_age_current").GetComponent<InputField>();
-            age.text = "" + (prop.age / 12);
-            Action<string> ageListener = (string val) => {
-                prop.age = int.Parse(val) * 12;
-            };
-            age.onValueChanged.AddListener(ageListener);
-            var ageMax = GameObject.Find("mod_qqty_age_max").GetComponent<InputField>();
-            ageMax.text = "" + (prop.life / 12);
-            Action<string> ageMaxListener = (string val) => {
-                prop.life = int.Parse(val) * 12;
-            };
-            age.onValueChanged.AddListener(ageMaxListener);
+            setInputField("mod_qqty_age_current", (prop.age / 12), delegate (int x) { prop.age = x*12; });
+            setInputField("mod_qqty_age_max", (prop.life / 12), delegate (int x) { prop.life = x*12; });
             #endregion
-
             #region 心情
+            setInputField("mod_qqty_mood_current", prop.mood, delegate (int x) { prop.mood = x; });
+            setInputField("mod_qqty_mood_max", prop.moodMax, delegate (int x) { prop.moodMax = x; });
             var mood = GameObject.Find("mod_qqty_mood_current").GetComponent<InputField>();
-            mood.text = "" + prop.mood;
-            Action<string> moodListener = (string val) => {
-                prop.mood = int.Parse(val);
-            };
-            mood.onValueChanged.AddListener(moodListener);
-            var moodMax = GameObject.Find("mod_qqty_mood_max").GetComponent<InputField>();
-            moodMax.text = "" + prop.moodMax;
-            Action<string> moodMaxListener = (string val) => {
-                prop.moodMax = int.Parse(val);
-            };
-            moodMax.onValueChanged.AddListener(moodMaxListener);
             #endregion
-
             #region 健康
-            var healthy = GameObject.Find("mod_qqty_healthy_current").GetComponent<InputField>();
-            healthy.text = "" + prop.health;
-            Action<string> healthyMaxListener = (string val) => {
-                prop.health = int.Parse(val);
-            };
-            healthy.onValueChanged.AddListener(healthyMaxListener);
-            var healthyMax = GameObject.Find("mod_qqty_healthy_max").GetComponent<InputField>();
-            healthyMax.text = "" + prop.healthMax;
-            Action<string> healthyMaxMaxListener = (string val) => {
-                prop.healthMax = int.Parse(val);
-            };
-            healthyMax.onValueChanged.AddListener(healthyMaxMaxListener);
+            setInputField("mod_qqty_healthy_current", prop.health, delegate (int x) { prop.health = x; });
+            setInputField("mod_qqty_healthy_max", prop.healthMax, delegate (int x) { prop.healthMax = x; });
             #endregion
-
             #region 体力
-            var hp = GameObject.Find("mod_qqty_hp_current").GetComponent<InputField>();
-            hp.text = "" + prop.hp;
-            Action<string> hpListener = (string val) => {
-                prop.hp = int.Parse(val);
-            };
-            hp.onValueChanged.AddListener(hpListener);
-            var hpMax = GameObject.Find("mod_qqty_hp_max").GetComponent<InputField>();
-            hpMax.text = "" + prop.hpMax;
-            Action<string> hpMaxListener = (string val) => {
-                prop.hpMax = int.Parse(val);
-            };
-            hpMax.onValueChanged.AddListener(hpMaxListener);
+            setInputField("mod_qqty_hp_current", prop.hp, delegate (int x) { prop.hp = x; });
+            setInputField("mod_qqty_hp_max", prop.hpMax, delegate (int x) { prop.hpMax = x; });
             #endregion
-
-            #region 精力
-            var mp = GameObject.Find("mod_qqty_mp_current").GetComponent<InputField>();
-            mp.text = "" + prop.mp;
-            Action<string> mpListener = (string val) => {
-                prop.mp = int.Parse(val);
-            };
-            mp.onValueChanged.AddListener(mpListener);
-            var mpMax = GameObject.Find("mod_qqty_mp_max").GetComponent<InputField>();
-            mpMax.text = "" + prop.mpMax;
-            Action<string> mpMaxListener = (string val) => {
-                prop.hpMax = int.Parse(val);
-            };
-            mpMax.onValueChanged.AddListener(mpMaxListener);
+            #region 灵力
+            setInputField("mod_qqty_mp_current", prop.mp, delegate (int x) { prop.mp = x; });
+            setInputField("mod_qqty_mp_max", prop.mpMax, delegate (int x) { prop.mpMax = x; });
             #endregion
-
             #region 念力
-            var sp = GameObject.Find("mod_qqty_sp_current").GetComponent<InputField>();
-            sp.text = "" + prop.sp;
-            Action<string> spListener = (string val) => {
-                prop.sp = int.Parse(val);
-            };
-            sp.onValueChanged.AddListener(spListener);
-            var spMax = GameObject.Find("mod_qqty_sp_max").GetComponent<InputField>();
-            spMax.text = "" + prop.spMax;
-            Action<string> spMaxListener = (string val) => {
-                prop.spMax = int.Parse(val);
-            };
-            spMax.onValueChanged.AddListener(spMaxListener);
+            setInputField("mod_qqty_sp_current", prop.sp, delegate (int x) { prop.sp = x; });
+            setInputField("mod_qqty_sp_max", prop.spMax, delegate (int x) { prop.spMax = x; });
             #endregion
-
             #region 幸运
-            var lucky = GameObject.Find("mod_qqty_lucky").GetComponent<InputField>();
-            lucky.text = "" + prop.luck;
-            Action<string> luckyListener = (string val) => {
-                prop.luck = int.Parse(val);
-            };
-            lucky.onValueChanged.AddListener(luckyListener);
+            setInputField("mod_qqty_lucky", prop.luck, delegate (int x) { prop.luck = x; });
             #endregion
-
             #region 悟性
-            var wuxing = GameObject.Find("mod_qqty_wuxing").GetComponent<InputField>();
-            wuxing.text = "" + prop.talent;
-            Action<string> talentListener = (string val) => {
-                prop.talent = int.Parse(val);
-            };
-            wuxing.onValueChanged.AddListener(talentListener);
+            setInputField("mod_qqty_wuxing", prop.talent, delegate (int x) { prop.talent = x; });
             #endregion
-
-            #region 魅力
-            var prestige = GameObject.Find("mod_qqty_prestige").GetComponent<InputField>();
-            prestige.text = "" + prop.beauty;
-            Action<string> prestigeListener = (string val) => {
-                prop.beauty = int.Parse(val);
-            };
-            prestige.onValueChanged.AddListener(prestigeListener);
+            #region 境界
+            var gradeText = GameObject.Find("mod_qqty_mygrade_text").GetComponent<Text>();
+            var gradeItem = g.conf.roleGrade.GetItem(prop.gradeID);
+            gradeText.text = string.Format("{0}{1}", getLocalText(gradeItem.gradeName), getLocalText(gradeItem.phaseName));
             #endregion
-
-            #region 声望
-            var charm = GameObject.Find("mod_qqty_charm").GetComponent<InputField>();
-            charm.text = "" + prop.reputation;
-            Action<string> charmListener = (string val) => {
-                prop.reputation = int.Parse(val);
-            };
-            charm.onValueChanged.AddListener(charmListener);
+            #region 精力
+            setInputField("mod_qqty_energy", prop.energy, delegate (int x) { prop.energy = x; });
+            setInputField("mod_qqty_energy_max", prop.energyMax, delegate (int x) { prop.energyMax = x; });
             #endregion
-
-            var energy = GameObject.Find("mod_qqty_energy").GetComponent<InputField>();
-            energy.text = "" + prop.energy;
-            Action<string> energyListener = (string val) => {
-                prop.energy = int.Parse(val);
-            };
-            energy.onValueChanged.AddListener(energyListener);
-            var energyMax = GameObject.Find("mod_qqty_energy_max").GetComponent<InputField>();
-            energyMax.text = "" + prop.energyMax;
-            Action<string> energyMaxListener = (string val) => {
-                prop.energyMax = int.Parse(val);
-            };
-            energyMax.onValueChanged.AddListener(energyMaxListener);
-            var dp = GameObject.Find("mod_qqty_dp").GetComponent<InputField>();
-            dp.text = "" + player.data.unitData.fieldSkillData.dp;
-            Action<string> dpListener = (string val) => {
-                player.data.unitData.fieldSkillData.dp = int.Parse(val);
-            };
-            dp.onValueChanged.AddListener(dpListener);
-            var dpMax = GameObject.Find("mod_qqty_dp_max").GetComponent<InputField>();
-            dpMax.text = "" + player.data.unitData.fieldSkillData.dpMax;
-            Action<string> dpMaxListener = (string val) => {
-                player.data.unitData.fieldSkillData.dpMax = int.Parse(val);
-            };
-            dpMax.onValueChanged.AddListener(dpMaxListener);
-            var attack = GameObject.Find("mod_qqty_attack").GetComponent<InputField>();
-            attack.text = "" + prop.attack;
-            Action<string> attackListener = (string val) => {
-                prop.attack = int.Parse(val);
-            };
-            attack.onValueChanged.AddListener(attackListener);
-            var defense = GameObject.Find("mod_qqty_defense").GetComponent<InputField>();
-            defense.text = "" + prop.defense;
-            Action<string> defenseListener = (string val) => {
-                prop.defense = int.Parse(val);
-            };
-            defense.onValueChanged.AddListener(defenseListener);
-            var footSpeed = GameObject.Find("mod_qqty_footSpeed").GetComponent<InputField>();
-            footSpeed.text = "" + prop.footSpeed;
-            Action<string> footSpeedListener = (string val) => {
-                prop.footSpeed = int.Parse(val);
-            };
-            footSpeed.onValueChanged.AddListener(footSpeedListener);
-            var phycicalFree = GameObject.Find("mod_qqty_phycicalFree").GetComponent<InputField>();
-            phycicalFree.text = "" + prop.phycicalFree;
-            Action<string> phycicalFreeListener = (string val) => {
-                prop.phycicalFree = int.Parse(val);
-            };
-            phycicalFree.onValueChanged.AddListener(phycicalFreeListener);
-            var magicFree = GameObject.Find("mod_qqty_magicFree").GetComponent<InputField>();
-            magicFree.text = "" + prop.magicFree;
-            Action<string> magicFreeListener = (string val) => {
-                prop.magicFree = int.Parse(val);
-            };
-            magicFree.onValueChanged.AddListener(magicFreeListener);
-            var critValue = GameObject.Find("mod_qqty_critValue").GetComponent<InputField>();
-            critValue.text = "" + prop.critValue;
-            Action<string> critValueListener = (string val) => {
-                prop.critValue = int.Parse(val);
-            };
-            critValue.onValueChanged.AddListener(critValueListener);
-            var guardValue = GameObject.Find("mod_qqty_guardValue").GetComponent<InputField>();
-            guardValue.text = "" + prop.guardValue;
-            Action<string> guardValueListener = (string val) => {
-                prop.guardValue = int.Parse(val);
-            };
-            guardValue.onValueChanged.AddListener(guardValueListener);
-            var moveSpeed = GameObject.Find("mod_qqty_moveSpeed").GetComponent<InputField>();
-            moveSpeed.text = "" + prop.moveSpeed;
-            Action<string> moveSpeedListener = (string val) => {
-                prop.moveSpeed = int.Parse(val);
-            };
-            moveSpeed.onValueChanged.AddListener(moveSpeedListener);
-            var crit = GameObject.Find("mod_qqty_crit").GetComponent<InputField>();
-            crit.text = "" + prop.crit;
-            Action<string> critListener = (string val) => {
-                prop.crit = int.Parse(val);
-            };
-            crit.onValueChanged.AddListener(critListener);
-            var guard = GameObject.Find("mod_qqty_guard").GetComponent<InputField>();
-            guard.text = "" + prop.guard;
-            Action<string> guardListener = (string val) => {
-                prop.guard = int.Parse(val);
-            };
-            guard.onValueChanged.AddListener(guardListener);
-            var immortalPoint = GameObject.Find("mod_qqty_immortalPoint").GetComponent<InputField>();
-            immortalPoint.text = "0";
-
-            var basisBlade = GameObject.Find("mod_qqty_basisBlade").GetComponent<InputField>();
-            basisBlade.text = "" + prop.basisBlade;
-            Action<string> basisBladeListener = (string val) => {
-                prop.basisBlade = int.Parse(val);
-            };
-            basisBlade.onValueChanged.AddListener(basisBladeListener);
-            var basisSword = GameObject.Find("mod_qqty_basisSword").GetComponent<InputField>();
-            basisSword.text = "" + prop.basisSword;
-            Action<string> basisSwordListener = (string val) => {
-                prop.basisSword = int.Parse(val);
-            };
-            basisSword.onValueChanged.AddListener(basisSwordListener);
-            var basisSpear = GameObject.Find("mod_qqty_basisSpear").GetComponent<InputField>();
-            basisSpear.text = "" + prop.basisSpear;
-            Action<string> basisSpearListener = (string val) => {
-                prop.basisSpear = int.Parse(val);
-            };
-            basisSpear.onValueChanged.AddListener(basisSpearListener);
-            var basisFist = GameObject.Find("mod_qqty_basisFist").GetComponent<InputField>();
-            basisFist.text = "" + prop.basisFist;
-            Action<string> basisFistListener = (string val) => {
-                prop.basisFist = int.Parse(val);
-            };
-            basisFist.onValueChanged.AddListener(basisFistListener);
-            var basisPalm = GameObject.Find("mod_qqty_basisPalm").GetComponent<InputField>();
-            basisPalm.text = "" + prop.basisPalm;
-            Action<string> basisPalmListener = (string val) => {
-                prop.basisPalm = int.Parse(val);
-            };
-            basisPalm.onValueChanged.AddListener(basisPalmListener);
-            var basisFinger = GameObject.Find("mod_qqty_basisFinger").GetComponent<InputField>();
-            basisFinger.text = "" + prop.basisFinger;
-            Action<string> basisFingerListener = (string val) => {
-                prop.basisFinger = int.Parse(val);
-            };
-            basisFinger.onValueChanged.AddListener(basisFingerListener);
-            var basisFire = GameObject.Find("mod_qqty_basisFire").GetComponent<InputField>();
-            basisFire.text = "" + prop.basisFire;
-            Action<string> basisFireListener = (string val) => {
-                prop.basisFire = int.Parse(val);
-            };
-            basisFire.onValueChanged.AddListener(basisFireListener);
-            var basisFroze = GameObject.Find("mod_qqty_basisFroze").GetComponent<InputField>();
-            basisFroze.text = "" + prop.basisFroze;
-            Action<string> basisFrozeListener = (string val) => {
-                prop.basisFroze = int.Parse(val);
-            };
-            basisFroze.onValueChanged.AddListener(basisFrozeListener);
-            var basisThunder = GameObject.Find("mod_qqty_basisThunder").GetComponent<InputField>();
-            basisThunder.text = "" + prop.basisThunder;
-            Action<string> basisThunderListener = (string val) => {
-                prop.basisThunder = int.Parse(val);
-            };
-            basisThunder.onValueChanged.AddListener(basisThunderListener);
-            var basisWind = GameObject.Find("mod_qqty_basisWind").GetComponent<InputField>();
-            basisWind.text = "" + prop.basisWind;
-            Action<string> basisWindListener = (string val) => {
-                prop.basisWind = int.Parse(val);
-            };
-            basisWind.onValueChanged.AddListener(basisWindListener);
-            var basisEarth = GameObject.Find("mod_qqty_basisEarth").GetComponent<InputField>();
-            basisEarth.text = "" + prop.basisEarth;
-            Action<string> basisEarthListener = (string val) => {
-                prop.basisEarth = int.Parse(val);
-            };
-            basisEarth.onValueChanged.AddListener(basisEarthListener);
-            var basisWood = GameObject.Find("mod_qqty_basisWood").GetComponent<InputField>();
-            basisWood.text = "" + prop.basisWood;
-            Action<string> basisWoodListener = (string val) => {
-                prop.basisWood = int.Parse(val);
-            };
-            basisWood.onValueChanged.AddListener(basisWoodListener);
-            var refineElixir = GameObject.Find("mod_qqty_refineElixir").GetComponent<InputField>();
-            refineElixir.text = "" + prop.refineElixir;
-            Action<string> refineElixirListener = (string val) => {
-                prop.refineElixir = int.Parse(val);
-            };
-            refineElixir.onValueChanged.AddListener(refineElixirListener);
-            var refineWeapon = GameObject.Find("mod_qqty_refineWeapon").GetComponent<InputField>();
-            refineWeapon.text = "" + prop.refineWeapon;
-            Action<string> refineWeaponListener = (string val) => {
-                prop.refineWeapon = int.Parse(val);
-            };
-            refineWeapon.onValueChanged.AddListener(refineWeaponListener);
-            var geomancy = GameObject.Find("mod_qqty_geomancy").GetComponent<InputField>();
-            geomancy.text = "" + prop.geomancy;
-            Action<string> geomancyListener = (string val) => {
-                prop.geomancy = int.Parse(val);
-            };
-            geomancy.onValueChanged.AddListener(geomancyListener);
-            var abilityPoint = GameObject.Find("mod_qqty_abilityPoint").GetComponent<InputField>();
-            abilityPoint.text = "" + prop.abilityPoint;
-            Action<string> abilityPointListener = (string val) => {
-                prop.abilityPoint = int.Parse(val);
-            };
-            abilityPoint.onValueChanged.AddListener(abilityPointListener);
-            var herbal = GameObject.Find("mod_qqty_herbal").GetComponent<InputField>();
-            herbal.text = "" + prop.herbal;
-            Action<string> herbalListener = (string val) => {
-                prop.herbal = int.Parse(val);
-            };
-            herbal.onValueChanged.AddListener(herbalListener);
-            var mine = GameObject.Find("mod_qqty_mine").GetComponent<InputField>();
-            mine.text = "" + prop.mine;
-            Action<string> mineListener = (string val) => {
-                prop.mine = int.Parse(val);
-            };
-            mine.onValueChanged.AddListener(mineListener);
-            var symbol = GameObject.Find("mod_qqty_symbol").GetComponent<InputField>();
-            symbol.text = "" + prop.symbol;
-            Action<string> symbolListener = (string val) => {
-                prop.symbol = int.Parse(val);
-            };
-            symbol.onValueChanged.AddListener(symbolListener);
-            var standUp = GameObject.Find("mod_qqty_standUp").GetComponent<InputField>();
-            standUp.text = "" + prop.standUp;
-            Action<string> standUpListener = (string val) => {
-                prop.standUp = int.Parse(val);
-            };
-            standUp.onValueChanged.AddListener(standUpListener);
-            var standDown = GameObject.Find("mod_qqty_standDown").GetComponent<InputField>();
-            standDown.text = "" + prop.standDown;
-            Action<string> standDownListener = (string val) => {
-                prop.standDown = int.Parse(val);
-            };
-            standDown.onValueChanged.AddListener(standDownListener);
-
-
-
-
+            #region 道力
+            setInputField("mod_qqty_dp", player.data.unitData.fieldSkillData.dp, delegate (int x) { player.data.unitData.fieldSkillData.dp = x; });
+            setInputField("mod_qqty_dp_max", player.data.unitData.fieldSkillData.dpMax, delegate (int x) { player.data.unitData.fieldSkillData.dpMax = x; });
+            #endregion
+            #region 攻击力
+            setInputField("mod_qqty_attack", prop.attack, delegate (int x) { prop.attack = x; });
+            #endregion
+            #region 防御力
+            setInputField("mod_qqty_defense", prop.defense, delegate (int x) { prop.defense = x; });
+            #endregion
+            #region 脚力
+            setInputField("mod_qqty_footSpeed", prop.footSpeed, delegate (int x) { prop.footSpeed = x; });
+            #endregion
+            #region 物免
+            setInputField("mod_qqty_phycicalFree", prop.phycicalFree, delegate (int x) { prop.phycicalFree = x; });
+            #endregion
+            #region 魔免
+            setInputField("mod_qqty_magicFree", prop.magicFree, delegate (int x) { prop.magicFree = x; });
+            #endregion
+            #region 会心
+            setInputField("mod_qqty_critValue", prop.critValue, delegate (int x) { prop.critValue = x; });
+            #endregion
+            #region 护心
+            setInputField("mod_qqty_guardValue", prop.guardValue, delegate (int x) { prop.guardValue = x; });
+            #endregion
+            #region 移速
+            setInputField("mod_qqty_moveSpeed", prop.moveSpeed, delegate (int x) { prop.moveSpeed = x; });
+            #endregion
+            #region 暴击
+            setInputField("mod_qqty_crit", prop.crit, delegate (int x) { prop.crit = x; });
+            #endregion
+            #region 护心
+            setInputField("mod_qqty_guard", prop.guard, delegate (int x) { prop.guard = x; });
+            #endregion
+            #region 仙力点
+            setInputField("mod_qqty_immortalPoint", player.data.unitData.immortalCard.immortalPoint, delegate (int x) { player.data.unitData.immortalCard.immortalPoint = x; });
+            #endregion
+            #region 刀资质
+            setInputField("mod_qqty_basisBlade", prop.basisBlade, delegate (int x) { prop.basisBlade = x; });
+            #endregion
+            #region 剑资质 
+            setInputField("mod_qqty_basisSword", prop.basisSword, delegate (int x) { prop.basisSword = x; });
+            #endregion
+            #region 枪资质 
+            setInputField("mod_qqty_basisSpear", prop.basisSpear, delegate (int x) { prop.basisSpear = x; });
+            #endregion
+            #region 拳资质 
+            setInputField("mod_qqty_basisFist", prop.basisFist, delegate (int x) { prop.basisFist = x; });
+            #endregion
+            #region 掌资质
+            setInputField("mod_qqty_basisPalm", prop.basisPalm, delegate (int x) { prop.basisPalm = x; });
+            #endregion
+            #region 指资质 
+            setInputField("mod_qqty_basisFinger", prop.basisFinger, delegate (int x) { prop.basisFinger = x; });
+            #endregion
+            #region 火灵根
+            setInputField("mod_qqty_basisFire", prop.basisFire, delegate (int x) { prop.basisFire = x; });
+            #endregion
+            #region 水灵根 
+            setInputField("mod_qqty_basisFroze", prop.basisFroze, delegate (int x) { prop.basisFroze = x; });
+            #endregion
+            #region 雷灵根 
+            setInputField("mod_qqty_basisThunder", prop.basisThunder, delegate (int x) { prop.basisThunder = x; });
+            #endregion
+            #region 风灵根
+            setInputField("mod_qqty_basisWind", prop.basisWind, delegate (int x) { prop.basisWind = x; });
+            #endregion
+            #region 土灵根
+            setInputField("mod_qqty_basisEarth", prop.basisEarth, delegate (int x) { prop.basisEarth = x; });
+            #endregion
+            #region 木灵根
+            setInputField("mod_qqty_basisWood", prop.basisWood, delegate (int x) { prop.basisWood = x; });
+            #endregion
+            #region 炼丹
+            setInputField("mod_qqty_refineElixir", prop.refineElixir, delegate (int x) { prop.refineElixir = x; });
+            #endregion
+            #region 炼器
+            setInputField("mod_qqty_refineWeapon", prop.refineWeapon, delegate (int x) { prop.refineWeapon = x; });
+            #endregion
+            #region 风水
+            setInputField("mod_qqty_geomancy", prop.geomancy, delegate (int x) { prop.geomancy = x; });
+            #endregion
+            #region 道点
+            setInputField("mod_qqty_abilityPoint", prop.abilityPoint, delegate (int x) { prop.abilityPoint = x; });
+            #endregion
+            #region 药材
+            setInputField("mod_qqty_herbal", prop.herbal, delegate (int x) { prop.herbal = x; });
+            #endregion
+            #region 矿采
+            setInputField("mod_qqty_mine", prop.mine, delegate (int x) { prop.mine = x; });
+            #endregion
+            #region 画符 
+            setInputField("mod_qqty_symbol", prop.symbol, delegate (int x) { prop.symbol = x; });
+            #endregion
+            #region 正道值
+            setInputField("mod_qqty_standUp", prop.standUp, delegate (int x) { prop.standUp = x; });
+            #endregion
+            #region 魔道值 
+            setInputField("mod_qqty_standDown", prop.standDown, delegate (int x) { prop.standDown = x; });
+            #endregion
+            #region 视野 
+            setInputField("mod_qqty_view", player.data.dynUnitData.playerView.value, delegate (int x) { player.data.dynUnitData.playerView.baseValue = x; });
+            
+            #endregion
         }
 
+        /// <summary>
+        /// 宗门
+        /// </summary>
         private void BuildSchool()
         {
             var npcinfo = g.ui.GetUI<UINPCInfo>(UIType.NPCInfo);
 
             var player = npcinfo != null ? npcinfo.unit : g.world.playerUnit;
-
-            foreach(var i in g.conf.data.modEnum._allConfList)
-                Console.WriteLine("=========={0}, {1}, {2}" , i.id, i.desc, i.title);
-
-            
-
 
             var schoolID = player.data.unitData.schoolID;
 
@@ -545,66 +411,191 @@ namespace qqty_Modifier
             var school = player.data._school;
 
             var schoolN = GameObject.Find("mod_qqty_schoolName").GetComponent<InputField>();
-            schoolN.text = school.branchName;
+            schoolN.text = school.name;
 
-           
-
-            // player.data.school.buildData;
-            var school_loyal = GameObject.Find("mod_qqty_school_loyal").GetComponent<InputField>();
-            school_loyal.text = "" + school.buildData.propertyData.loyal;
-            Action<string> school_loyalDownListener = (string val) => {
-                school.buildData.propertyData.loyal = int.Parse(val);
+            SetInputField setInputField = delegate (string inputName, long x, OnChange onChange) {
+                var component = GameObject.Find(inputName).GetComponent<InputField>();
+                component.text = "" + x;
+                Action<string> componentListener = (string val) => {
+                    onChange(int.Parse(val));
+                };
+                component.onEndEdit.AddListener(componentListener);
             };
-            school_loyal.onValueChanged.AddListener(school_loyalDownListener);
 
-            var school_prosperous = GameObject.Find("mod_qqty_school_prosperous").GetComponent<InputField>();
-            school_prosperous.text = "" + school.buildData.propertyData.prosperous;
-            Action<string> prosperousDownListener = (string val) => {
-                school.buildData.propertyData.prosperous = int.Parse(val);
-            };
-            school_prosperous.onValueChanged.AddListener(prosperousDownListener);
 
-            var school_money = GameObject.Find("mod_qqty_school_money").GetComponent<InputField>();
-            school_money.text = "" + school.buildData.money;
-            Action<string> school_moneyDownListener = (string val) => {
-                school.buildData.money = int.Parse(val);
-            };
-            school_money.onValueChanged.AddListener(school_moneyDownListener);
+            var schoolData = school.buildData;
 
-            var school_reputation = GameObject.Find("mod_qqty_school_reputation").GetComponent<InputField>();
-            school_reputation.text = "" + school.buildData.reputation;
-            Action<string> school_reputationDownListener = (string val) => {
-                school.buildData.reputation = int.Parse(val);
-            };
-            school_reputation.onValueChanged.AddListener(school_reputationDownListener);
+            setInputField("mod_qqty_school_loyal", schoolData.propertyData.loyal, delegate (int x) { schoolData.propertyData.loyal = x; });
 
-            var school_medicina = GameObject.Find("mod_qqty_school_medicina").GetComponent<InputField>();
-            school_medicina.text = "" + school.buildData.propertyData.medicina;
-            Action<string> school_medicinaDownListener = (string val) => {
-                school.buildData.propertyData.medicina = int.Parse(val);
-            };
-            school_medicina.onValueChanged.AddListener(school_medicinaDownListener);
+            setInputField("mod_qqty_school_prosperous", schoolData.propertyData.prosperous, delegate (int x) { schoolData.propertyData.prosperous = x; });
 
-            var school_mine = GameObject.Find("mod_qqty_school_mine").GetComponent<InputField>();
-            school_mine.text = "" + school.buildData.propertyData.mine;
-            Action<string> school_mineDownListener = (string val) => {
-                school.buildData.propertyData.mine = int.Parse(val);
-            };
-            school_mine.onValueChanged.AddListener(school_mineDownListener);
+            setInputField("mod_qqty_school_money", schoolData.money, delegate (int x) { schoolData.money = x; });
 
-            var school_prp = GameObject.Find("mod_qqty_school_prp").GetComponent<InputField>();
-            school_prp.text = "" + school.buildData.totalMember;
-            Action<string> school_prpDownListener = (string val) => {
-                school.buildData.propertyData.medicina = int.Parse(val);
-            };
-            school_prp.onValueChanged.AddListener(school_prpDownListener);
+            setInputField("mod_qqty_school_reputation", schoolData.reputation, delegate (int x) { schoolData.reputation = x; });
 
-            var school_level = GameObject.Find("mod_qqty_school_level").GetComponent<InputField>();
-            school_level.text = "" + school.buildData.propertyData.level;
-            Action<string> school_levelDownListener = (string val) => {
-                school.buildData.propertyData.level = int.Parse(val);
+            setInputField("mod_qqty_school_medicina", schoolData.propertyData.medicina, delegate (int x) { schoolData.propertyData.medicina = x; });
+
+            setInputField("mod_qqty_school_mine", schoolData.propertyData.mine, delegate (int x) { schoolData.propertyData.mine = x; });
+
+            setInputField("mod_qqty_school_prp", schoolData.totalMember, delegate (int x) { schoolData.totalMember = x; });
+
+            setInputField("mod_qqty_school_level", schoolData.manorData.mainManor.stable, delegate (int x) { schoolData.manorData.mainManor.stable = x; });
+
+            var setTc = GameObject.Find("mod_qqty_school_setTc").GetComponent<Button>();
+            if (school.IsTopSchool())
+            {
+                Action setTcDownListener = () => {
+                    schoolData.postData.ClearUnitID(schoolData.npcSchoolMain, true);
+                    schoolData.npcSchoolMain = player.data.unitData.unitID;
+                    schoolData.SetPostType(SchoolPostType.SchoolMain, player.data.unitData.unitID);
+                };
+                setTc.onClick.AddListener(setTcDownListener);
+            } else {
+                setTc.interactable = false;
+            }
+        }
+
+        /// <summary>
+        /// 逆天改名下拉框监听
+        /// </summary>
+        /// <param name="dropdown">下拉框View</param>
+        /// <param name="index">逆天改名ID</param>
+        delegate void SetLuckDropdownListener(Dropdown dropdown, int index);
+
+        /// <summary>
+        /// 逆天改名
+        /// </summary>
+        private void BuildLuck()
+        {
+            var npcinfo = g.ui.GetUI<UINPCInfo>(UIType.NPCInfo);
+
+            Il2CppSystem.Collections.Generic.Dictionary<int, DataWorld.World.PlayerLogData.GradeData> upGrade = null;
+            if (npcinfo != null) {
+                var _upGrade = npcinfo.unit.data.unitData.npcUpGrade;
+                if (_upGrade != null && _upGrade.Keys.Count > 0)
+                    upGrade = _upGrade;
+            } else {
+                var _upGrade = g.data.world.playerLog.upGrade;
+                if (_upGrade != null && _upGrade.Keys.Count > 0)
+                    upGrade = _upGrade;
+            }
+
+            if (upGrade == null) {
+                GameObject.Find("mod_qqty_Grade").SetActive(false);
+                return;
+            }
+
+            var luckOptions = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+            var luckIds = new System.Collections.Generic.List<int>();
+
+            foreach (var featureItem in g.conf.fateFeature._allConfList)
+            {
+                var item = getLocalText("role_feature_postnatal_name", featureItem.id);
+                luckOptions.Add(new Dropdown.OptionData(item));
+                luckIds.Add(featureItem.id);
+            }
+
+
+            var leve = 1;
+
+            foreach(var it in upGrade)
+            {
+                var mod_qqty_leve = GameObject.Find("mod_qqty_leve_" + leve).GetComponent<Dropdown>();
+                mod_qqty_leve.options = luckOptions;
+                mod_qqty_leve.value = luckIds.IndexOf(it.Value.luck);
+                mod_qqty_leve.interactable = true;
+
+                SetLuckDropdownListener setLuckDropdownListener = delegate (Dropdown dropdown, int index) {
+                    Action<int> mod_qqty_luckListener = (int value) => {
+                        var rs = new DataWorld.World.PlayerLogData.GradeData();
+                        rs.luck = luckIds[value];
+                        rs.quality = -1;
+                        upGrade[index] = rs;
+                    };
+                    dropdown.onValueChanged.AddListener(mod_qqty_luckListener);
+                };
+                setLuckDropdownListener(mod_qqty_leve, it.Key);
+                leve++;
+            }
+        }
+
+        /// <summary>
+        /// 获取物品
+        /// </summary>
+        private void BuildItem()
+        {
+            var npcinfo = g.ui.GetUI<UINPCInfo>(UIType.NPCInfo);
+
+            var player = npcinfo != null ? npcinfo.unit : g.world.playerUnit;
+            if (player == null) return;
+
+            var itemList = GameObject.Find("mod_qqty_item_list").GetComponent<Dropdown>();
+            var searchInput = GameObject.Find("mod_qqty_item_search").GetComponent<InputField>();
+            var itemCount = GameObject.Find("mod_qqty_item_count").GetComponent<InputField>();
+            var submit = GameObject.Find("mod_qqty_item_submit").GetComponent<Button>();
+            submit.interactable = false;
+
+            itemCount.text = defaultItemCount;
+
+            var itemOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+            var items = new System.Collections.Generic.List<ConfItemPropsItem>();
+
+            foreach (var item in g.conf.itemProps._allConfList)
+                items.Add(item);
+            
+            if (defaultItemSreachText != null && defaultItemSreachText.Trim().Length > 0) {
+                searchInput.text = defaultItemSreachText;
+                var results = from tmp in items where getLocalText(tmp.name).Contains(defaultItemSreachText) select getLocalText(tmp.name);
+                foreach (var s in results)
+                    itemOption.Add(new Dropdown.OptionData(s));
+                itemList.options = itemOption;
+                if (propID != 0) submit.interactable = true;
+            }
+
+            Action<string> searchListener = (string val) => {
+                submit.interactable = false;
+                if (val.Length == 0) return;
+
+                defaultItemSreachText = val;
+                var results2 = from tmp in items where getLocalText(tmp.name).Contains(defaultItemSreachText) select tmp;
+                
+                itemOption.Clear();
+                if (results2.Count() <= 0) return;
+                foreach (var s in results2)
+                    itemOption.Add(new Dropdown.OptionData(getLocalText(s.name)));
+                
+                propID = results2.ElementAt(0).id;
+                submit.interactable = true;
+                itemList.options = itemOption;
+                itemList.Show();
+
             };
-            school_level.onValueChanged.AddListener(school_levelDownListener);
+            searchInput.onEndEdit.AddListener(searchListener);
+
+            Action<int> itemListListener = (int i) =>
+            {
+                Predicate<ConfItemPropsItem> predicate = (ConfItemPropsItem item) => {
+                    return getLocalText(item.name).Equals(itemOption[i].text);
+                };
+                var index = items.FindLastIndex(predicate);
+                
+                if(index != 0) {
+                    propID = items[index].id;
+                    submit.interactable = true;
+                }
+            };
+            itemList.onValueChanged.AddListener(itemListListener);
+
+            Action submitListener = () =>
+            {
+                if (propID != 0)
+                {
+                    player.data.unitData.propData.AddProps(propID, int.Parse(defaultItemCount));
+                }
+            };
+            submit.onClick.AddListener(submitListener);
+
+            
         }
     }
 }
