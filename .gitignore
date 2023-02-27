@@ -1,10 +1,12 @@
-ModProject/ModCode/ModMain/.vs/
-ModProject/ModCode/ModMain/Library/
-ModProject/ModCode/ModMain/Example/
-ModProject/ModCode/ModMain/obj/
+/ModProject/ModCode/ModMain/.vs
+/ModProject/ModCode/ModMain/Library
+/ModProject/ModCode/ModMain/Example
+/ModProject/ModCode/ModMain/obj/*
+/ModProject/ModCode/ModMain/bin
 
-ModProject/ModRes/ResBuildABProject/.vs
-ModProject/ModRes/ResBuildABProject/Library
-ModProject/ModRes/ResBuildABProject/Logs
-ModProject/ModRes/ResBuildABProject/obj
-ModProject/ModRes/ResBuildABProject/Temp
+/ModProject/ModRes/ResBuildABProject/.vs
+/ModProject/ModRes/ResBuildABProject/Library
+/ModProject/ModRes/ResBuildABProject/Logs
+/ModProject/ModRes/ResBuildABProject/obj
+/ModProject/ModRes/ResBuildABProject/Temp
+/.vs

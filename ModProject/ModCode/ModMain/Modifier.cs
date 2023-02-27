@@ -1,3 +1,4 @@
+using qqty1201;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -45,23 +46,8 @@ namespace qqty_Modifier
             SetDynMax();
             if (Input.GetKeyDown(KeyCode.Keypad1))
             {
-                var info = g.ui.OpenUI<UIModDress>(UIType.ModDress);
-                var modelData = g.world.playerUnit.data.unitData.propertyData.modelData;
-
-                var sb = $"1|{modelData.hat}|{modelData.hair}|{modelData.hairFront}|{modelData.head}|{modelData.eyebrows}|{modelData.eyes}" +
-                    $"|{modelData.nose}|{modelData.mouth}|{modelData.body}|{modelData.back}|{modelData.forehead}|{modelData.faceFull}|{modelData.faceLeft}|{modelData.faceRight}";
-
-                ModDataValueString modDataValue = new ModDataValueString();
-                modDataValue.value = sb;
-                info.InitData(modDataValue, UnitSexType.Man);
-
-                info.btnOK.onClick.RemoveAllListeners();
-
-                Action btnOkLisener = () => {
-                    var str = info.piptValue.text;
-
-                };
-                info.btnOK.onClick.AddListener(btnOkLisener);
+                ModifierSex(g.world.playerUnit.data, UnitSexType.Woman);
+                
             }
 
             if (Input.GetKeyDown(KeyCode.BackQuote)) {
@@ -387,7 +373,24 @@ namespace qqty_Modifier
             #endregion
             #region 视野 
             setInputField("mod_qqty_view", player.data.dynUnitData.playerView.value, delegate (int x) { player.data.dynUnitData.playerView.baseValue = x; });
-            
+
+            #endregion
+            #region 性别
+            var changeSex = GameObject.Find("mod_qqty_change_sex").GetComponent<Button>();
+            bool isMan = prop.sex == UnitSexType.Man;
+            changeSex.GetComponentInChildren<Text>().text = isMan ? "改成女性": "改成男性";
+            Action changeSexListener = () => {
+                ModifierSex(player.data, isMan? UnitSexType.Woman: UnitSexType.Man);
+            };
+            changeSex.onClick.AddListener(changeSexListener);
+            #endregion 
+            #region 捏脸
+            var changeDress = GameObject.Find("mod_qqty_change_dress").GetComponent<Button>();
+           
+            Action changeDressListener = () => {
+                ModifierSex(player.data, prop.sex);
+            };
+            changeDress.onClick.AddListener(changeDressListener);
             #endregion
         }
 
@@ -596,6 +599,130 @@ namespace qqty_Modifier
             submit.onClick.AddListener(submitListener);
 
             
+        }
+    
+
+        private string UnitModelDataString(WorldUnitData data, UnitSexType type)
+        {
+            var modelData = data.unitData.propertyData.modelData;
+            var sex = data.unitData.propertyData.sex;
+            int pns = 40000;
+
+            int hat = modelData.hat;
+            int hair = modelData.hair;
+            int hairFront = modelData.hairFront;
+            int head = modelData.head;
+            int eyebrows = modelData.eyebrows;
+            int eyes = modelData.eyes;
+            int nose = modelData.nose;
+            int mouth = modelData.mouth;
+            int body = modelData.body;
+            int back = modelData.back;
+            int forehead = modelData.forehead;
+            int faceFull = modelData.faceFull;
+            int faceLeft = modelData.faceLeft;
+            int faceRight = modelData.faceRight;
+            int sexInt = (int)sex;
+            if(sex != type)
+            {
+                if(sex == UnitSexType.Man && type == UnitSexType.Woman)
+                {
+                    sexInt = 2;
+                    if (hair != 0) hair += pns;
+                    if(hairFront != 0)hairFront += pns;
+                    if(head != 0)head += pns;
+                    if(eyebrows != 0)eyebrows += pns;
+                    if(eyes != 0)eyes += pns;
+                    if(nose != 0)nose += pns;
+                    if(mouth != 0)mouth += pns;
+                    if (body != 0) body += pns;
+                    if(forehead!=0) forehead += pns;
+                    if (faceFull != 0) faceFull += pns;
+                    if (faceLeft != 0) faceLeft += pns;
+                    if (faceRight != 0) faceRight += pns;
+                }
+                if (sex == UnitSexType.Woman && type == UnitSexType.Man)
+                {
+                    sexInt = 2;
+                    if (hair != 0) hair -= pns;
+                    if (hairFront != 0) hairFront -= pns;
+                    if (head != 0) head -= pns;
+                    if (eyebrows != 0) eyebrows -= pns;
+                    if (eyes != 0) eyes -= pns;
+                    if (nose != 0) nose -= pns;
+                    if (mouth != 0) mouth -= pns;
+                    if (body != 0) body -= pns;
+                    if (forehead != 0) forehead -= pns;
+                    if (faceFull != 0) faceFull -= pns;
+                    if (faceLeft != 0) faceLeft -= pns;
+                    if (faceRight != 0) faceRight -= pns;
+                }
+            }
+            return $"{sexInt}|{hat}|{hair}|{hairFront}|{head}|{eyebrows}|{eyes}|{nose}|{mouth}|{body}|{back}|{forehead}|{faceFull}|{faceLeft}|{faceRight}";
+        }
+
+        private void ModifierSex(WorldUnitData data, UnitSexType checkType)
+        {
+
+            var info = g.ui.OpenUI<UIModDress>(UIType.ModDress);
+            var modelData = data.unitData.propertyData.modelData;
+
+            var value = UnitModelDataString(data, checkType);
+            
+            #region 创建 “取消”按钮
+            var cancel = UICreator.CreateButton(info.gameObject, "qqty_mm_cancel", "取消");
+            Utils.SetAnchor(cancel.gameObject, Utils.v2(395f, -252f), Utils.v2(0f, 1f)).sizeDelta = Utils.v2(205f, 90f);
+            Text cleanTxt = cancel.GetComponentInChildren<Text>();
+            cleanTxt.fontSize = info.textOK.fontSize;
+            cleanTxt.fontStyle = info.textOK.fontStyle;
+            cleanTxt.font = info.textOK.font;
+            cancel.GetComponentInChildren<Image>().sprite = info.btnOK.GetComponent<Image>().sprite;
+            #endregion
+
+            #region 创建 “确定”按钮
+            var okbtn = UICreator.CreateButton(info.gameObject, "qqty_mm_ok", "确定");
+            Utils.SetAnchor(okbtn.gameObject, Utils.v2(565f, -252f), Utils.v2(0f, 1f)).sizeDelta = Utils.v2(205f, 90f);
+            Text okTxt = okbtn.GetComponentInChildren<Text>();
+            okTxt.fontSize = info.textOK.fontSize;
+            okTxt.fontStyle = info.textOK.fontStyle;
+            okTxt.font = info.textOK.font;
+            okbtn.GetComponentInChildren<Image>().sprite = info.btnOK.GetComponent<Image>().sprite;
+            #endregion
+
+            info.btnOK.gameObject.SetActive(false);
+            info.textOK.gameObject.SetActive(false);
+
+            ModDataValueString modDataValue = new ModDataValueString();
+            modDataValue.value = value;
+            info.InitData(modDataValue, checkType);
+
+            Action btnOkLisener = () => {
+                var str = info.piptValue.text;
+                var param = str.Split('|');
+                
+                modelData.hat = int.Parse(param[1]);
+                modelData.hair = int.Parse(param[2]);
+                modelData.hairFront = int.Parse(param[3]);
+                modelData.head = int.Parse(param[4]);
+                modelData.eyebrows = int.Parse(param[5]);
+                modelData.eyes = int.Parse(param[6]);
+                modelData.nose = int.Parse(param[7]);
+                modelData.mouth = int.Parse(param[8]);
+                modelData.body = int.Parse(param[9]);
+                modelData.back = int.Parse(param[10]);
+                modelData.forehead = int.Parse(param[11]);
+                modelData.faceFull = int.Parse(param[12]);
+                modelData.faceLeft = int.Parse(param[13]);
+                modelData.faceRight = int.Parse(param[14]);
+                data.unitData.propertyData.sex = (UnitSexType)int.Parse(param[0]);
+                info.UpdateFacadeUI();
+                g.ui.CloseUI(info);
+            };
+            okbtn.onClick.AddListener(btnOkLisener);
+            Action cancelOkLisener = () => {
+                g.ui.CloseUI(info);
+            };
+            cancel.onClick.AddListener(cancelOkLisener);
         }
     }
 }
