@@ -1,0 +1,10 @@
+ModProject/ModCode/ModMain/.vs/
+ModProject/ModCode/ModMain/Library/
+ModProject/ModCode/ModMain/Example/
+ModProject/ModCode/ModMain/obj/
+
+ModProject/ModRes/ResBuildABProject/.vs
+ModProject/ModRes/ResBuildABProject/Library
+ModProject/ModRes/ResBuildABProject/Logs
+ModProject/ModRes/ResBuildABProject/obj
+ModProject/ModRes/ResBuildABProject/Temp
