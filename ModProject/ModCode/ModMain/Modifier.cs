@@ -450,12 +450,9 @@ namespace qqty_Modifier
             setInputField("mod_qqty_school_level", schoolData.manorData.mainManor.stable, delegate (int x) { schoolData.manorData.mainManor.stable = x; });
 
             var setTc = GameObject.Find("mod_qqty_school_setTc").GetComponent<Button>();
-            if (school.IsTopSchool())
-            {
+            if (school.IsTopSchool()) {
                 Action setTcDownListener = () => {
-                    schoolData.postData.ClearUnitID(schoolData.npcSchoolMain, true);
-                    schoolData.npcSchoolMain = player.data.unitData.unitID;
-                    schoolData.SetPostType(SchoolPostType.SchoolMain, player.data.unitData.unitID);
+                    player.CreateAction(new UnitActionSchoolSetPostType(schoolID, new UnitActionSchoolSetPostType.SchoolMainData()));
                 };
                 setTc.onClick.AddListener(setTcDownListener);
             } else {
