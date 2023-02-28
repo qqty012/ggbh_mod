@@ -42,12 +42,17 @@ namespace qqty_Modifier
 
         public void OnUpdate()
         {
-
             SetDynMax();
             if (Input.GetKeyDown(KeyCode.Keypad1))
             {
-                ModifierSex(g.world.playerUnit.data, UnitSexType.Woman);
+               
                 
+
+            }
+            if(Input.GetKeyDown(KeyCode.Keypad2)) {
+                Console.WriteLine("=============");
+                foreach(var ui in g.ui.allUI)
+                    Console.WriteLine(ui.Key);
             }
 
             if (Input.GetKeyDown(KeyCode.BackQuote)) {
@@ -380,7 +385,7 @@ namespace qqty_Modifier
             bool isMan = prop.sex == UnitSexType.Man;
             changeSex.GetComponentInChildren<Text>().text = isMan ? "改成女性": "改成男性";
             Action changeSexListener = () => {
-                ModifierSex(player.data, isMan? UnitSexType.Woman: UnitSexType.Man);
+                ModifierSex(player.data, isMan? UnitSexType.Woman: UnitSexType.Man, npcinfo);
             };
             changeSex.onClick.AddListener(changeSexListener);
             #endregion 
@@ -388,7 +393,7 @@ namespace qqty_Modifier
             var changeDress = GameObject.Find("mod_qqty_change_dress").GetComponent<Button>();
            
             Action changeDressListener = () => {
-                ModifierSex(player.data, prop.sex);
+                ModifierSex(player.data, prop.sex, npcinfo);
             };
             changeDress.onClick.AddListener(changeDressListener);
             #endregion
@@ -459,14 +464,14 @@ namespace qqty_Modifier
         }
 
         /// <summary>
-        /// 逆天改名下拉框监听
+        /// 逆天改命下拉框监听
         /// </summary>
         /// <param name="dropdown">下拉框View</param>
         /// <param name="index">逆天改名ID</param>
         delegate void SetLuckDropdownListener(Dropdown dropdown, int index);
 
         /// <summary>
-        /// 逆天改名
+        /// 逆天改命
         /// </summary>
         private void BuildLuck()
         {
@@ -538,6 +543,8 @@ namespace qqty_Modifier
             var submit = GameObject.Find("mod_qqty_item_submit").GetComponent<Button>();
             submit.interactable = false;
 
+            
+
             itemCount.text = defaultItemCount;
 
             var itemOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
@@ -597,111 +604,22 @@ namespace qqty_Modifier
                 }
             };
             submit.onClick.AddListener(submitListener);
-
             
         }
-    
 
-         private string UnitModelDataString(WorldUnitData data, UnitSexType type)
-        {
-            var modelData = data.unitData.propertyData.modelData;
-            var sex = data.unitData.propertyData.sex;
-            int pns = 40000;
-
-            int hat = modelData.hat;
-            int hair = modelData.hair;
-            int hairFront = modelData.hairFront;
-            int head = modelData.head;
-            int eyebrows = modelData.eyebrows;
-            int eyes = modelData.eyes;
-            int nose = modelData.nose;
-            int mouth = modelData.mouth;
-            int body = modelData.body;
-            int back = modelData.back;
-            int forehead = modelData.forehead;
-            int faceFull = modelData.faceFull;
-            int faceLeft = modelData.faceLeft;
-            int faceRight = modelData.faceRight;
-            int sexInt = (int)sex;
-            if(sex != type)
-            {
-                System.Collections.Generic.List<int> GetIDs(int _sex) {
-                    var ids = new System.Collections.Generic.List<int>();
-                    foreach (var _t1 in g.conf.roleDress._allConfList)
-                        if (_t1.sex == _sex && _t1.active == 1) ids.Add(_t1.id);
-                    return ids;
-                } 
-                if(sex == UnitSexType.Man && type == UnitSexType.Woman)
-                {
-                    var ids = GetIDs(2);
-                    sexInt = 2;
-
-                    if (hair != 0) hair += pns;
-                    if (!ids.Contains(hair)) hair = 55001;
-                    if (hairFront != 0) hairFront += pns;
-                    if (!ids.Contains(hairFront)) hairFront = 56001;
-                    if (head != 0) head += pns;
-                    if (!ids.Contains(head)) head = 51001;
-                    if (eyebrows != 0) eyebrows += pns;
-                    if (!ids.Contains(eyebrows)) eyebrows = 52001;
-                    if (eyes != 0) eyes += pns;
-                    if (!ids.Contains(eyes)) eyes = 57001;
-                    if (nose != 0) nose += pns;
-                    if (!ids.Contains(nose)) nose = 50001;
-                    if (mouth != 0) mouth += pns;
-                    if (!ids.Contains(mouth)) mouth = 59001;
-                    if (body != 0) body += pns;
-                    if (!ids.Contains(body)) body = 58001;
-                    if (forehead != 0) forehead += pns;
-                    if (!ids.Contains(forehead)) forehead = 0;
-                    if (faceFull != 0) faceFull += pns;
-                    if (!ids.Contains(faceFull)) faceFull = 0;
-                    if (faceLeft != 0) faceLeft += pns;
-                    if (!ids.Contains(faceLeft)) faceLeft = 0;
-                    if (faceRight != 0) faceRight += pns;
-                    if (!ids.Contains(faceRight)) faceRight = 0;
-                }
-                if (sex == UnitSexType.Woman && type == UnitSexType.Man)
-                {
-                    var ids = GetIDs(1);
-
-                    sexInt = 1;
-                    if (hair != 0) hair -= pns;
-                    if (!ids.Contains(hair)) hair = 15001;
-                    if (hairFront != 0) hairFront -= pns;
-                    if (!ids.Contains(hairFront)) hairFront = 16001;
-                    if (head != 0) head -= pns;
-                    if (!ids.Contains(head)) head = 11001;
-                    if (eyebrows != 0) eyebrows -= pns;
-                    if (!ids.Contains(eyebrows)) eyebrows = 12001;
-                    if (eyes != 0) eyes -= pns;
-                    if (!ids.Contains(eyes)) eyes = 17001;
-                    if (nose != 0) nose -= pns;
-                    if (!ids.Contains(nose)) nose = 10001;
-                    if (mouth != 0) mouth -= pns;
-                    if (!ids.Contains(mouth)) mouth = 19001;
-                    if (body != 0) body -= pns;
-                    if (!ids.Contains(body)) body = 18001;
-                    if (forehead != 0) forehead -= pns;
-                    if (!ids.Contains(forehead)) forehead = 13001;
-                    if (faceFull != 0) faceFull -= pns;
-                    if (!ids.Contains(faceFull)) faceFull = 0;
-                    if (faceLeft != 0) faceLeft -= pns;
-                    if (!ids.Contains(faceLeft)) faceLeft = 0;
-                    if (faceRight != 0) faceRight -= pns;
-                    if (!ids.Contains(faceRight)) faceRight = 0;
-                }
-            }
-            return $"{sexInt}|{hat}|{hair}|{hairFront}|{head}|{eyebrows}|{eyes}|{nose}|{mouth}|{body}|{back}|{forehead}|{faceFull}|{faceLeft}|{faceRight}";
-        }
-
+        /// <summary>
+        /// 切换Unit模型数据
+        /// </summary>
+        /// <param name="data">unit data</param>
+        /// <param name="checkType">切换的性别</param>
+        /// <param name="iNPCInfo">npc信息 可为null</param>
         private void ModifierSex(WorldUnitData data, UnitSexType checkType, UINPCInfo iNPCInfo)
         {
-
             var info = g.ui.OpenUI<UIModDress>(UIType.ModDress);
-            var modelData = data.unitData.propertyData.modelData;
+            UnitModelDataTool dataTool = new UnitModelDataTool(data.unitData.propertyData.modelData.Clone());
+            dataTool.SexChange(checkType);
 
-            var value = UnitModelDataString(data, checkType);
+            var value = dataTool.ToModelString();
             
             #region 创建 “取消”按钮
             var cancel = UICreator.CreateButton(info.gameObject, "qqty_mm_cancel", "取消");
@@ -736,43 +654,23 @@ namespace qqty_Modifier
 
             Action btnOkLisener = () => {
                 var str = info.piptValue.text;
-                var param = str.Split('|');
                 g.ui.CloseUI(info);
-                var newModel = data.unitData.propertyData.modelData;
-                newModel.sex = int.Parse(param[0]);
-                newModel.hat = int.Parse(param[1]);
-                newModel.hair = int.Parse(param[2]);
-                newModel.hairFront = int.Parse(param[3]);
-                newModel.head = int.Parse(param[4]);
-                newModel.eyebrows = int.Parse(param[5]);
-                newModel.eyes = int.Parse(param[6]);
-                newModel.nose = int.Parse(param[7]);
-                newModel.mouth = int.Parse(param[8]);
-                newModel.body = int.Parse(param[9]);
-                newModel.back = int.Parse(param[10]);
-                newModel.forehead = int.Parse(param[11]);
-                newModel.faceFull = int.Parse(param[12]);
-                newModel.faceLeft = int.Parse(param[13]);
-                newModel.faceRight = int.Parse(param[14]);
-                data.unitData.propertyData.sex = (UnitSexType)newModel.sex;
-                data.dynUnitData.sex.baseValue = newModel.sex;
+
+                dataTool.UpdateData(str);
+                data.unitData.propertyData.sex = (UnitSexType)dataTool.data.sex;
+                data.dynUnitData.sex.baseValue = dataTool.data.sex;
 
                 var newBattleModel = data.unitData.propertyData.battleModelData;
-                newBattleModel.sex = newModel.sex;
-                newBattleModel.hat = newModel.hat;
-                newBattleModel.hair = newModel.hair;
-                newBattleModel.back = newModel.back;
-                newBattleModel.body = newModel.body;
+                newBattleModel.sex = dataTool.data.sex;
+                newBattleModel.hat = dataTool.data.hat;
+                newBattleModel.hair = dataTool.data.hair;
+                newBattleModel.back = dataTool.data.back;
+                newBattleModel.body = dataTool.data.body;
 
+                data.SetModelData(dataTool.data, newBattleModel);
 
-                data.SetModelData(newModel, newBattleModel);
                 if (iNPCInfo != null) iNPCInfo.UpdateUI();
-                else {
-                    var map = g.ui.GetUI<UIMapMain>(UIType.MapMain);
-                    map.DestroyUI();
-                    g.ui.CloseUI(map);
-                    map = g.ui.OpenUI<UIMapMain>(UIType.MapMain);
-                }
+                else PlayerTool.UpdatePlayerMapMainUI();
             };
             okbtn.onClick.AddListener(btnOkLisener);
         }
