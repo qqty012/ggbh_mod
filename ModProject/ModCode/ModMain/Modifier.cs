@@ -45,7 +45,11 @@ namespace qqty_Modifier
             SetDynMax();
             if (Input.GetKeyDown(KeyCode.Keypad1))
             {
-               // g.conf.roleCreateFeature.allLuckList
+                foreach(var item in g.conf.roleCreateFeature.allLuckList[2])
+                {
+                    if(item.lockLuck == 1 || item.conceal == 1) continue;
+                    Console.WriteLine(getLocalText(item.name) + $" ======== ${item.lockLuck}, {item.conceal}");
+                }
                 
 
             }
@@ -70,6 +74,7 @@ namespace qqty_Modifier
                         try { BuildSchool(); } catch (Exception e) { Console.WriteLine(e); }
                         try { BuildLuck(); } catch (Exception e) { Console.WriteLine(e); }
                         try { BuildItem(); } catch (Exception e) { Console.WriteLine(e); }
+                        try { BuildAddLuck(); } catch (Exception e) { Console.WriteLine(e); }
                     }
                 }
                 Input.ResetInputAxes();
@@ -672,22 +677,96 @@ namespace qqty_Modifier
             okbtn.onClick.AddListener(btnOkLisener);
         }
 
+
+        delegate ConfRoleCreateFeatureItem FindLuck(int id);
+
         private void BuildAddLuck()
         {
              var npcinfo = g.ui.GetUI<UINPCInfo>(UIType.NPCInfo);
 
             var player = npcinfo != null ? npcinfo.unit : g.world.playerUnit;
             if (player == null) return;
-            
+
+            FindLuck findLuck = delegate (int id) {
+                return g.conf.roleCreateFeature.GetItem(id);
+            };
+
             var bornLuck_list = GameObject.Find("mod_qqty_bornLuck_list").GetComponent<Dropdown>();
-            var bornLuck_allList = GameObject.Find("mod_qqty_bornLuck_all_list").GetComponent<Dropdown>();
-            var bornLuck_add = GameObject.Find("mod_qqty_bornLuck_add").GetComponent<Button>();
             var bornLuck_del = GameObject.Find("mod_qqty_bornLuck_del").GetComponent<Button>();
 
+            var bornLuck_allList = GameObject.Find("mod_qqty_bornLuck_all_list").GetComponent<Dropdown>();
+            var bornLuck_add = GameObject.Find("mod_qqty_bornLuck_add").GetComponent<Button>();
+
+
+            var allLuck = new System.Collections.Generic.List<ConfRoleCreateFeatureItem>();
+            var allLuckID = new System.Collections.Generic.List<int>();
+
+            foreach (var item in g.conf.roleCreateFeature.allLuckList[2])
+            {
+                if (item.lockLuck == 1 || item.conceal == 1) continue;
+                allLuck.Add(item);
+                allLuckID.Add(item.id);
+            }
+
+            var prop = player.data.unitData.propertyData;
+            var addLuckListOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+
+            
+            
+
+            #region 删除后天气运
+            foreach (var item in prop.addLuck)
+            {
+                var val = getLocalText(findLuck(item.id).name);
+                if (val.Trim() == "") val = "[被MOD修改了]";
+                addLuckListOption.Add(new Dropdown.OptionData(val));
+            }
+
             var addLuck_list = GameObject.Find("mod_qqty_addLuck_list").GetComponent<Dropdown>();
+            addLuck_list.options = addLuckListOption;
+
+            var delId = prop.addLuck.Count > 0 ? prop.addLuck[0].id : -1;
+            Action<int> addLuckListListener = (int index) => {
+                delId = prop.addLuck[index].id;
+            };
+            addLuck_list.onValueChanged.AddListener(addLuckListListener);
+
+            var addLuck_del = GameObject.Find("mod_qqty_addLuck_del").GetComponent<Button>();
+            Action addLuckDelListener = () => {
+                if (delId == -1) return;
+                prop.DelAddLuck(delId);
+            };
+            addLuck_del.onClick.AddListener(addLuckDelListener);
+            #endregion
+
+            #region 添加后天气运
+            var addLuckAllListOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+            foreach (var item in allLuck)
+            {
+                var val = getLocalText(item.name);
+                if (val.Trim() == "") val = "[被MOD修改了]";
+                addLuckAllListOption.Add(new Dropdown.OptionData(val));
+            }
+                
             var addLuck_allList = GameObject.Find("mod_qqty_addLuck_all_list").GetComponent<Dropdown>();
-            var bornLuck_add = GameObject.Find("mod_qqty_addLuck_add").GetComponent<Button>();
-            var bornLuck_del = GameObject.Find("mod_qqty_addLuck_del").GetComponent<Button>();
+            addLuck_allList.options = addLuckAllListOption;
+
+            var addData = allLuck.Count > 0 ? allLuck[0]: null;
+            Action<int> addLuckAllListListener = (int index) => {
+                addData = allLuck[index];
+            };
+            addLuck_allList.onValueChanged.AddListener(addLuckAllListListener);
+
+            var addLuck_add = GameObject.Find("mod_qqty_addLuck_add").GetComponent<Button>();
+            Action addLuckAddListener = () => {
+                if (addData == null) return;
+                var luckData = new DataUnit.LuckData();
+                luckData.id = addData.id;
+                luckData.duration = 6;
+                prop.AddAddLuck(luckData);
+            };
+            addLuck_add.onClick.AddListener(addLuckAddListener);
+            #endregion
         }
     }
 }
