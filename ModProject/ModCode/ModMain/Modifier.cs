@@ -45,7 +45,7 @@ namespace qqty_Modifier
             SetDynMax();
             if (Input.GetKeyDown(KeyCode.Keypad1))
             {
-               
+               // g.conf.roleCreateFeature.allLuckList
                 
 
             }
@@ -670,6 +670,24 @@ namespace qqty_Modifier
                 else PlayerTool.UpdatePlayerMapMainUI();
             };
             okbtn.onClick.AddListener(btnOkLisener);
+        }
+
+        private void BuildAddLuck()
+        {
+             var npcinfo = g.ui.GetUI<UINPCInfo>(UIType.NPCInfo);
+
+            var player = npcinfo != null ? npcinfo.unit : g.world.playerUnit;
+            if (player == null) return;
+            
+            var bornLuck_list = GameObject.Find("mod_qqty_bornLuck_list").GetComponent<Dropdown>();
+            var bornLuck_allList = GameObject.Find("mod_qqty_bornLuck_all_list").GetComponent<Dropdown>();
+            var bornLuck_add = GameObject.Find("mod_qqty_bornLuck_add").GetComponent<Button>();
+            var bornLuck_del = GameObject.Find("mod_qqty_bornLuck_del").GetComponent<Button>();
+
+            var addLuck_list = GameObject.Find("mod_qqty_addLuck_list").GetComponent<Dropdown>();
+            var addLuck_allList = GameObject.Find("mod_qqty_addLuck_all_list").GetComponent<Dropdown>();
+            var bornLuck_add = GameObject.Find("mod_qqty_addLuck_add").GetComponent<Button>();
+            var bornLuck_del = GameObject.Find("mod_qqty_addLuck_del").GetComponent<Button>();
         }
     }
 }
