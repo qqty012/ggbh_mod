@@ -45,13 +45,6 @@ namespace qqty_Modifier
             SetDynMax();
             if (Input.GetKeyDown(KeyCode.Keypad1))
             {
-                foreach(var item in g.conf.roleCreateFeature.allLuckList[2])
-                {
-                    if(item.lockLuck == 1 || item.conceal == 1) continue;
-                    Console.WriteLine(getLocalText(item.name) + $" ======== ${item.lockLuck}, {item.conceal}");
-                }
-                
-
             }
             if(Input.GetKeyDown(KeyCode.Keypad2)) {
                 Console.WriteLine("=============");
@@ -545,63 +538,27 @@ namespace qqty_Modifier
             var submit = GameObject.Find("mod_qqty_item_submit").GetComponent<Button>();
             submit.interactable = false;
 
-            
-
             itemCount.text = defaultItemCount;
 
-            var itemOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-            var items = new System.Collections.Generic.List<ConfItemPropsItem>();
+            var items = new System.Collections.Generic.List<SearchOption>();
 
             foreach (var item in g.conf.itemProps._allConfList)
-                items.Add(item);
-            
-            if (defaultItemSreachText != null && defaultItemSreachText.Trim().Length > 0) {
-                searchInput.text = defaultItemSreachText;
-                var results = from tmp in items where getLocalText(tmp.name).Contains(defaultItemSreachText) select getLocalText(tmp.name);
-                foreach (var s in results)
-                    itemOption.Add(new Dropdown.OptionData(s));
-                itemList.options = itemOption;
-                if (propID != 0) submit.interactable = true;
-            }
+                items.Add(new SearchOption(item.id, item.name, getLocalText(item.name)));
 
-            Action<string> searchListener = (string val) => {
-                submit.interactable = false;
-                if (val.Length == 0) return;
-
-                defaultItemSreachText = val;
-                var results2 = from tmp in items where getLocalText(tmp.name).Contains(defaultItemSreachText) select tmp;
-                
-                itemOption.Clear();
-                if (results2.Count() <= 0) return;
-                foreach (var s in results2)
-                    itemOption.Add(new Dropdown.OptionData(getLocalText(s.name)));
-                
-                propID = results2.ElementAt(0).id;
+            Action<SearchOption> onChange = (SearchOption o) => {
                 submit.interactable = true;
-                itemList.options = itemOption;
-                itemList.Show();
-
+                propID = o.id;
             };
-            searchInput.onEndEdit.AddListener(searchListener);
 
-            Action<int> itemListListener = (int i) =>
-            {
-                Predicate<ConfItemPropsItem> predicate = (ConfItemPropsItem item) => {
-                    return getLocalText(item.name).Equals(itemOption[i].text);
-                };
-                var index = items.FindLastIndex(predicate);
-                
-                if(index != 0) {
-                    propID = items[index].id;
-                    submit.interactable = true;
-                }
+            PlayerTool.SearchForDropdown(itemList, searchInput, items, onChange, defaultItemSreachText);
+
+            Action<string> itemCountOnChange = (string val) => {
+                defaultItemCount = val;
             };
-            itemList.onValueChanged.AddListener(itemListListener);
+            itemCount.onEndEdit.AddListener(itemCountOnChange);
 
-            Action submitListener = () =>
-            {
-                if (propID != 0)
-                {
+            Action submitListener = () =>{
+                if (propID != 0) {
                     player.data.unitData.propData.AddProps(propID, int.Parse(defaultItemCount));
                 }
             };
@@ -691,32 +648,72 @@ namespace qqty_Modifier
                 return g.conf.roleCreateFeature.GetItem(id);
             };
 
+            var prop = player.data.unitData.propertyData;
+
+            #region 删除先天气运
+            var bornLuckListOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+            foreach (var item in prop.bornLuck) {
+                var val = getLocalText(findLuck(item.id).name);
+                if (val.Trim() == "") val = "[被MOD修改了]";
+                bornLuckListOption.Add(new Dropdown.OptionData(val));
+            }
             var bornLuck_list = GameObject.Find("mod_qqty_bornLuck_list").GetComponent<Dropdown>();
+            bornLuck_list.options = bornLuckListOption;
+            var delBornIndex = prop.bornLuck.Count > 0 ? 0 : -1;
+            Action<int> bornLuckListListener = (int index) => {
+                delBornIndex = index;
+            };
+            bornLuck_list.onValueChanged.AddListener(bornLuckListListener);
             var bornLuck_del = GameObject.Find("mod_qqty_bornLuck_del").GetComponent<Button>();
+            Action bornLuckDelListener = () => {
+                if (delBornIndex == -1) return;
+                UnhollowerBaseLib.Il2CppReferenceArray<DataUnit.LuckData> newBornLuck = new UnhollowerBaseLib.Il2CppReferenceArray<DataUnit.LuckData>(prop.bornLuck.Length - 1);
+                for (var i = 0; i < prop.bornLuck.Length; i++)
+                    if (delBornIndex != i) newBornLuck[i] = prop.bornLuck[i];
+                prop.bornLuck = newBornLuck;
+            };
+            bornLuck_del.onClick.AddListener(bornLuckDelListener);
+            #endregion
 
-            var bornLuck_allList = GameObject.Find("mod_qqty_bornLuck_all_list").GetComponent<Dropdown>();
-            var bornLuck_add = GameObject.Find("mod_qqty_bornLuck_add").GetComponent<Button>();
-
-
-            var allLuck = new System.Collections.Generic.List<ConfRoleCreateFeatureItem>();
-            var allLuckID = new System.Collections.Generic.List<int>();
-
-            foreach (var item in g.conf.roleCreateFeature.allLuckList[2])
+            #region 添加先天气运
+            var bornLuckAllList = new System.Collections.Generic.List<SearchOption>();
+            foreach (var item in g.conf.roleCreateFeature.allLuckList[1])
             {
                 if (item.lockLuck == 1 || item.conceal == 1) continue;
-                allLuck.Add(item);
-                allLuckID.Add(item.id);
+                var val = getLocalText(item.name);
+                if (val.Trim() == "") val = "[被MOD修改了]";
+                bornLuckAllList.Add(new SearchOption(item.id, item.name, val));
             }
+            var bornLuck_allList = GameObject.Find("mod_qqty_bornLuck_all_list").GetComponent<Dropdown>();
+            var bornLuck_add = GameObject.Find("mod_qqty_bornLuck_add").GetComponent<Button>();
+            var bornLuck_allList_search = GameObject.Find("mod_qqty_bornLuck_search").GetComponent<InputField>();
+            var bId = 0;
+            Action<SearchOption> bornOnChange = (SearchOption o) => {
+                bId = o.id;
+            };
 
-            var prop = player.data.unitData.propertyData;
-            var addLuckListOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+            PlayerTool.SearchForDropdown(bornLuck_allList, bornLuck_allList_search, bornLuckAllList, bornOnChange);
 
+            Action bornLuckAddListener = () => {
+                if (bId == -1) return;
+                var luckData = new DataUnit.LuckData();
+                luckData.id = bId;
+                luckData.duration = -1;
+                int count = prop.bornLuck.Count;
+                UnhollowerBaseLib.Il2CppReferenceArray<DataUnit.LuckData> newBornLuck = new UnhollowerBaseLib.Il2CppReferenceArray<DataUnit.LuckData>(count + 1);
+                for (var i = 0; i < count; i++)
+                    newBornLuck[i] = prop.bornLuck[i];
+                newBornLuck[count] = luckData;
+                prop.bornLuck = newBornLuck;
+            };
             
-            
+            bornLuck_add.onClick.AddListener(bornLuckAddListener);
+            #endregion
+
 
             #region 删除后天气运
-            foreach (var item in prop.addLuck)
-            {
+            var addLuckListOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+            foreach (var item in prop.addLuck) {
                 var val = getLocalText(findLuck(item.id).name);
                 if (val.Trim() == "") val = "[被MOD修改了]";
                 addLuckListOption.Add(new Dropdown.OptionData(val));
@@ -740,28 +737,28 @@ namespace qqty_Modifier
             #endregion
 
             #region 添加后天气运
-            var addLuckAllListOption = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-            foreach (var item in allLuck)
-            {
+            var addLuckAllList = new System.Collections.Generic.List<SearchOption>();
+            foreach (var item in g.conf.roleCreateFeature.allLuckList[2]) {
+                if (item.lockLuck == 1 || item.conceal == 1) continue;
                 var val = getLocalText(item.name);
                 if (val.Trim() == "") val = "[被MOD修改了]";
-                addLuckAllListOption.Add(new Dropdown.OptionData(val));
+                addLuckAllList.Add(new SearchOption(item.id, item.name, val));
             }
                 
             var addLuck_allList = GameObject.Find("mod_qqty_addLuck_all_list").GetComponent<Dropdown>();
-            addLuck_allList.options = addLuckAllListOption;
-
-            var addData = allLuck.Count > 0 ? allLuck[0]: null;
-            Action<int> addLuckAllListListener = (int index) => {
-                addData = allLuck[index];
+            var addLuck_allList_search = GameObject.Find("mod_qqty_addLuck_search").GetComponent<InputField>();
+            var sId = 0;
+            Action<SearchOption> onChange = (SearchOption o) => {
+                sId = o.id;
             };
-            addLuck_allList.onValueChanged.AddListener(addLuckAllListListener);
+
+            PlayerTool.SearchForDropdown(addLuck_allList, addLuck_allList_search, addLuckAllList, onChange);
 
             var addLuck_add = GameObject.Find("mod_qqty_addLuck_add").GetComponent<Button>();
             Action addLuckAddListener = () => {
-                if (addData == null) return;
+                if (sId == -1) return;
                 var luckData = new DataUnit.LuckData();
-                luckData.id = addData.id;
+                luckData.id = sId;
                 luckData.duration = 6;
                 prop.AddAddLuck(luckData);
             };
